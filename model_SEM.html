@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Exact Panoptic Replication</title>
+<style>
+    body {
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+        font-family: 'Segoe UI', sans-serif;
+        display: flex;
+        justify-content: center;
+    }
+    .wrapper {
+        display: flex;
+        gap: 10px;
+        background: transparent;
+    }
+    .panel-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .panel-title {
+        margin-top: 8px;
+        font-weight: 700;
+        font-size: 14px;
+        text-align: center;
+    }
+    .panel-subtitle {
+        font-weight: 400;
+        font-size: 12px;
+        color: #555;
+    }
+    svg {
+        border: 1px solid #000;
+        background: transparent; /* Allows transparency for the first panel */
+    }
+    
+    /* Legend Styling */
+    .legend {
+        margin-left: 15px;
+        background: white;
+        padding: 15px;
+        border: 1px solid #ccc;
+        font-size: 11px;
+        height: fit-content;
+    }
+    .legend-row { display: flex; align-items: center; margin-bottom: 4px; }
+    .swatch { width: 14px; height: 14px; margin-right: 8px; border: 1px solid #555; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+    <svg width="0" height="0" style="position:absolute;">
+        <defs>
+            <path id="road" d="M110,0 L125,0 L120,50 L125,100 L115,180 L105,250 L90,320 L70,380 L30,450 L0,480 L0,500 L40,500 L80,440 L100,380 L115,320 L125,250 L135,180 L140,100 L135,50 L130,0 Z" />
+
+            <path id="L1" d="M0,0 L110,0 L120,50 L125,100 L115,180 L105,250 L90,280 L0,280 Z" />
+            <path id="L2" d="M0,280 L90,280 L90,320 L70,360 L0,360 Z" />
+            <path id="L3" d="M0,360 L70,360 L70,380 L30,450 L0,480 Z" />
+            <path id="L4" d="M0,480 L30,450 L40,500 L0,500 Z" />
+
+            <path id="R1" d="M130,0 L200,0 L200,60 L135,50 Z" />
+            <path id="R2" d="M200,0 L250,0 L250,70 L200,60 Z" />
+            
+            <path id="R3" d="M135,50 L200,60 L250,70 L250,220 L200,230 L180,310 L150,300 L125,250 L135,180 L140,100 Z" />
+
+            <path id="R4" d="M200,230 L250,220 L250,260 L210,270 Z" />
+            <path id="R5" d="M210,270 L250,260 L250,300 L220,310 Z" />
+            
+            <path id="R6" d="M150,300 L180,310 L220,310 L220,340 L160,340 Z" />
+            <path id="R7" d="M160,340 L220,340 L230,370 L170,380 Z" />
+            <path id="R8" d="M170,380 L230,370 L240,410 L180,430 Z" />
+            <path id="R9" d="M180,430 L240,410 L250,460 L190,480 L130,430 Z" />
+            <path id="R10" d="M115,320 L150,300 L160,340 L130,430 L100,380 Z" /> <path id="R11" d="M190,480 L250,460 L250,500 L200,500 Z" /> <path id="R12" d="M80,440 L130,430 L190,480 L200,500 L40,500 Z" /> </defs>
+    </svg>
+
+    <div class="panel-group">
+        <svg width="250" height="500" viewBox="0 0 250 500">
+            <rect width="250" height="500" fill="none" />
+            
+            <use href="#road" fill="rgba(255,255,255,0.4)" stroke="none" />
+            
+            <g stroke="white" stroke-width="1" fill="none" opacity="0.3">
+                <use href="#L1"/> <use href="#L2"/> <use href="#L3"/>
+                <use href="#R3"/> <use href="#R8"/> <use href="#R9"/>
+            </g>
+            <text x="125" y="250" text-anchor="middle" fill="#333" font-size="12" opacity="0.5">[Transparent for Overlay]</text>
+        </svg>
+        <div class="panel-title">Satellite RGB<br><span class="panel-subtitle">Image</span></div>
+    </div>
+
+    <div class="panel-group">
+        <svg width="250" height="500" viewBox="0 0 250 500">
+            <rect width="250" height="500" fill="#000000" /> <use href="#L1" fill="#33a02c" /> <use href="#L2" fill="#33a02c" /> <use href="#L3" fill="#a6cee3" /> <use href="#road" fill="#000000" /> <use href="#R1" fill="#a6cee3" /> <use href="#R2" fill="#ffff33" /> <use href="#R3" fill="#ff7f00" /> <use href="#R4" fill="#984ea3" /> <use href="#R5" fill="#c2a5cf" /> <use href="#R6" fill="#8c564b" /> <use href="#R7" fill="#d8b365" /> <use href="#R8" fill="#e7298a" /> <use href="#R9" fill="#f781bf" /> <use href="#R10" fill="#999999" /> <use href="#R11" fill="#bdbdbd" /> <use href="#R12" fill="#859900" /> </svg>
+        <div class="panel-title">Semantic Map<br><span class="panel-subtitle">(What?)</span></div>
+    </div>
+
+    <div class="panel-group">
+        <svg width="250" height="500" viewBox="0 0 250 500">
+            <rect width="250" height="500" fill="#000000" />
+
+            <use href="#L1" fill="#2980b9" /> <use href="#L2" fill="#3498db" /> <use href="#L3" fill="#8e44ad" /> <use href="#road" fill="#000000" />
+
+            <use href="#R1" fill="#9b59b6" /> <use href="#R2" fill="#f1c40f" /> <use href="#R3" fill="#e67e22" /> <use href="#R4" fill="#d35400" /> 
+            <use href="#R5" fill="#c0392b" /> 
+            
+            <use href="#R6" fill="#16a085" /> 
+            <use href="#R7" fill="#27ae60" /> 
+            <use href="#R8" fill="#2ecc71" /> 
+            <use href="#R9" fill="#1abc9c" /> 
+            <use href="#R10" fill="#7f8c8d" /> 
+            
+            <use href="#R11" fill="#bdc3c7" /> 
+            <use href="#R12" fill="#95a5a6" /> 
+
+        </svg>
+        <div class="panel-title">Instance Map<br><span class="panel-subtitle">(Which?)</span></div>
+    </div>
+
+    <div class="panel-group">
+        <svg width="250" height="500" viewBox="0 0 250 500">
+            <rect width="250" height="500" fill="#000000" />
+
+            <g stroke="#000000" stroke-width="3" stroke-linejoin="round">
+                <use href="#L1" fill="#33a02c" />
+                <use href="#L2" fill="#33a02c" />
+                <use href="#L3" fill="#a6cee3" />
+                
+                <use href="#road" fill="#000000" stroke="none" /> <use href="#R1" fill="#a6cee3" />
+                <use href="#R2" fill="#ffff33" />
+                <use href="#R3" fill="#ff7f00" />
+
+                <use href="#R4" fill="#984ea3" />
+                <use href="#R5" fill="#c2a5cf" />
+                
+                <use href="#R6" fill="#8c564b" />
+                <use href="#R7" fill="#d8b365" />
+                <use href="#R8" fill="#e7298a" />
+                <use href="#R9" fill="#f781bf" />
+                <use href="#R10" fill="#999999" />
+                
+                <use href="#R11" fill="#bdbdbd" />
+                <use href="#R12" fill="#859900" />
+            </g>
+        </svg>
+        <div class="panel-title">Panoptic Map<br><span class="panel-subtitle">(What & Which?)</span></div>
+    </div>
+
+    <div class="legend">
+        <div style="font-weight:bold; margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">Color &nbsp; Class Name</div>
+        
+        <div class="legend-row"><div class="swatch" style="background:#000000"></div> Background</div>
+        <div class="legend-row"><div class="swatch" style="background:#a6cee3"></div> Meadow</div>
+        <div class="legend-row"><div class="swatch" style="background:#ff7f00"></div> Soft winter wheat</div>
+        <div class="legend-row"><div class="swatch" style="background:#ffff33"></div> Corn</div>
+        <div class="legend-row"><div class="swatch" style="background:#33a02c"></div> Winter barley</div>
+        <div class="legend-row"><div class="swatch" style="background:#984ea3"></div> Grapevine</div>
+        <div class="legend-row"><div class="swatch" style="background:#c2a5cf"></div> Beet</div>
+        <div class="legend-row"><div class="swatch" style="background:#8c564b"></div> Winter triticale</div>
+        <div class="legend-row"><div class="swatch" style="background:#d8b365"></div> Winter durum wheat</div>
+        <div class="legend-row"><div class="swatch" style="background:#e7298a"></div> Fruits, vegetables</div>
+        <div class="legend-row"><div class="swatch" style="background:#f781bf"></div> Potatoes</div>
+        <div class="legend-row"><div class="swatch" style="background:#999999"></div> Leguminous fodder</div>
+        <div class="legend-row"><div class="swatch" style="background:#bdbdbd"></div> Soybeans</div>
+        <div class="legend-row"><div class="swatch" style="background:#859900"></div> Orchard</div>
+    </div>
+
+</div>
+
+</body>
+</html>
