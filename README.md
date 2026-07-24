@@ -18,6 +18,25 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
+## Deployment Architecture
+
+The production Next.js application performs TFLite inference entirely in the
+browser. Its Netlify build only requires the Node.js dependencies declared in
+`package.json`; it does not require TensorFlow, NumPy, Flask, or a Python
+runtime.
+
+The older Flask inference service is retained under `api/` for local or
+standalone use. Install its dependencies explicitly when working on that
+service:
+
+```bash
+python -m pip install -r api/requirements.txt
+python api/index.py
+```
+
+Keeping these requirements under `api/` prevents frontend hosting providers
+from installing the unused TensorFlow server stack during the website build.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
