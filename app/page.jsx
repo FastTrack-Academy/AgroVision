@@ -1,7 +1,9 @@
 'use client';
 import { useState, useRef } from 'react';
 import Visualizer, { Histogram } from '../components/Visualizer';
-import Architecture from '../components/Architecture';
+import Architecture, { ArchitecturePipeline } from '../components/Architecture';
+import { parseNpy } from '../utils/npyParser';
+import { runClientInference } from '../utils/tfliteInference';
 
 const SAMPLES = [
     "S2_10001.npy", "S2_10002.npy", "S2_10003.npy",
@@ -17,26 +19,7 @@ export default function Home() {
     const [tStep, setTStep] = useState(60);
     const [maskSeq, setMaskSeq] = useState(null);
     const [rgbSeq, setRgbSeq] = useState(null);
-
-    const processResponseBuffer = async (response) => {
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error(text || "Unknown API Error");
-        }
-
-        const buffer = await response.arrayBuffer();
-        if (buffer.byteLength < 3997696) {
-            throw new Error("Invalid output received from the server. Model missing or misconfigured!");
-        }
-        // 61 * 128 * 128 = 999,424 bytes for Mask
-        const maskBuf = new Uint8Array(buffer, 0, 999424);
-        // 61 * 128 * 128 * 3 = 2,998,272 bytes for RGB
-        const rgbBuf = new Uint8Array(buffer, 999424, 2998272);
-
-        setMaskSeq(maskBuf);
-        setRgbSeq(rgbBuf);
-        setTStep(60);
-    };
+    const [activeSampleFilename, setActiveSampleFilename] = useState(null);
 
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
@@ -45,20 +28,16 @@ export default function Home() {
         setError('');
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            const arrayBuffer = await file.arrayBuffer();
+            const { data, shape } = parseNpy(arrayBuffer);
+            const { maskSeq: mSeq, rgbSeq: rSeq } = await runClientInference(data, shape);
 
-            // Bypass Next.js rewrites body size limit in dev
-            const apiUrl = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5328/api/predict' : '/api/predict';
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                body: formData
-            });
-
-            await processResponseBuffer(response);
+            setMaskSeq(mSeq);
+            setRgbSeq(rSeq);
+            setActiveSampleFilename(null);
+            setTStep(60);
         } catch (err) {
-            console.error(err);
-            setError(err.message);
+            setError(err.message || "Error running browser inference");
         } finally {
             setLoading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -69,21 +48,18 @@ export default function Home() {
         setLoading(true);
         setError('');
         try {
-            // Highly optimized: Tell backend to read the sample directly from disk.
-            // Bypasses Next 10MB rewrite limits and Vercel 4.5MB Serverless payload limits.
-            const formData = new FormData();
-            formData.append('sample', filename);
+            const response = await fetch(`/samples/${filename}`);
+            if (!response.ok) throw new Error("Failed to load sample file");
+            const arrayBuffer = await response.arrayBuffer();
+            const { data, shape } = parseNpy(arrayBuffer);
+            const { maskSeq: mSeq, rgbSeq: rSeq } = await runClientInference(data, shape);
 
-            const apiUrl = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5328/api/predict' : '/api/predict';
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                body: formData
-            });
-
-            await processResponseBuffer(response);
+            setMaskSeq(mSeq);
+            setRgbSeq(rSeq);
+            setActiveSampleFilename(filename);
+            setTStep(60);
         } catch (err) {
-            console.error(err);
-            setError("Error loading sample: " + err.message);
+            setError("Error loading sample: " + (err.message || String(err)));
         } finally {
             setLoading(false);
         }
@@ -134,7 +110,7 @@ export default function Home() {
                         <div className="flex-1 bg-slate-50 border border-slate-100 p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                             <div className="absolute top-0 left-0 w-2 h-full bg-teal-500 rounded-l-2xl"></div>
                             <h3 className="font-bold text-xl text-slate-800 mb-2 pl-2">Run Samples</h3>
-                            <p className="text-base text-slate-500 mb-6 pl-2">Don't have a dataset? Explore inference visually using benchmark subsets from the PASTIS validation set.</p>
+                            <p className="text-base text-slate-500 mb-6 pl-2">Don&apos;t have a dataset? Explore inference visually using benchmark subsets from the PASTIS validation set.</p>
                             <div className="relative">
                                 <select
                                     onChange={(e) => handleSampleLoad(e.target.value)}
@@ -183,11 +159,18 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <Visualizer rgbSeq={rgbSeq} maskSeq={maskSeq} tStep={tStep} />
+                        <Visualizer
+                            rgbSeq={rgbSeq}
+                            maskSeq={maskSeq}
+                            tStep={tStep}
+                            sampleFilename={activeSampleFilename}
+                        />
                         <Histogram maskSeq={maskSeq} tStep={tStep} />
                     </div>
                 )}
             </div>
+
+            <ArchitecturePipeline />
         </main>
     );
 }

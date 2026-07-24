@@ -1,18 +1,127 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { CLASS_COLORS, CLASS_NAMES } from '../utils/constants';
+import SampleMap from './SampleMap';
 
-export default function Visualizer({ rgbSeq, maskSeq, tStep }) {
+const CANVAS_SIZE = 128;
+
+function InteractiveCropCanvas({
+    canvasRef,
+    maskSeq,
+    maskOffset,
+    title,
+    tooltipId,
+    activeTooltipRef,
+}) {
+    const tooltipRef = useRef(null);
+    const swatchRef = useRef(null);
+    const classNameRef = useRef(null);
+    const classNumberRef = useRef(null);
+    const lastClassRef = useRef(-1);
+
+    const hideTooltip = useCallback(() => {
+        if (!tooltipRef.current) return;
+        tooltipRef.current.style.opacity = '0';
+        tooltipRef.current.setAttribute('aria-hidden', 'true');
+        if (activeTooltipRef.current === tooltipRef.current) {
+            activeTooltipRef.current = null;
+        }
+    }, [activeTooltipRef]);
+
+    const showCropAtPointer = useCallback((event) => {
+        const canvas = event.currentTarget;
+        const rect = canvas.getBoundingClientRect();
+        const localX = event.clientX - rect.left;
+        const localY = event.clientY - rect.top;
+        const pixelX = Math.min(
+            CANVAS_SIZE - 1,
+            Math.max(0, Math.floor((localX / rect.width) * CANVAS_SIZE))
+        );
+        const pixelY = Math.min(
+            CANVAS_SIZE - 1,
+            Math.max(0, Math.floor((localY / rect.height) * CANVAS_SIZE))
+        );
+        const classIndex = maskSeq[maskOffset + pixelY * CANVAS_SIZE + pixelX] ?? 0;
+        const color = CLASS_COLORS[classIndex] ?? CLASS_COLORS[0];
+
+        if (lastClassRef.current !== classIndex) {
+            lastClassRef.current = classIndex;
+            swatchRef.current.style.backgroundColor = `rgb(${color.join(',')})`;
+            classNameRef.current.textContent = CLASS_NAMES[classIndex] ?? `Class ${classIndex}`;
+            classNumberRef.current.textContent = `Class ${classIndex} · pixel ${pixelX}, ${pixelY}`;
+        }
+
+        const tooltip = tooltipRef.current;
+        if (activeTooltipRef.current && activeTooltipRef.current !== tooltip) {
+            activeTooltipRef.current.style.opacity = '0';
+            activeTooltipRef.current.setAttribute('aria-hidden', 'true');
+        }
+        activeTooltipRef.current = tooltip;
+        const tooltipWidth = 190;
+        const tooltipHeight = 64;
+        const left = Math.min(
+            Math.max(localX + 14, 8),
+            Math.max(8, rect.width - tooltipWidth)
+        );
+        const top = Math.min(
+            Math.max(localY - tooltipHeight, 8),
+            Math.max(8, rect.height - tooltipHeight)
+        );
+        tooltip.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+        tooltip.style.opacity = '1';
+        tooltip.setAttribute('aria-hidden', 'false');
+    }, [activeTooltipRef, maskOffset, maskSeq]);
+
+    return (
+        <div className="flex flex-col items-center">
+            <h3 className="text-sm font-semibold mb-1">{title}</h3>
+            <p className="h-5 text-xs text-slate-400 mb-2">Hover to inspect crop type</p>
+            <div className="relative w-full max-w-sm">
+                <canvas
+                    ref={canvasRef}
+                    width={CANVAS_SIZE}
+                    height={CANVAS_SIZE}
+                    onPointerMove={showCropAtPointer}
+                    onPointerLeave={hideTooltip}
+                    aria-label={`${title}. Hover over the image to inspect the predicted crop type.`}
+                    className="w-full aspect-square border-4 border-slate-100 rounded-xl object-contain pixelated shadow-sm cursor-crosshair"
+                    style={{imageRendering: 'pixelated'}}
+                />
+                <div
+                    ref={tooltipRef}
+                    data-testid={tooltipId}
+                    aria-hidden="true"
+                    className="absolute left-0 top-0 z-20 min-w-44 pointer-events-none opacity-0 rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 text-white shadow-2xl transition-opacity duration-75"
+                >
+                    <div className="flex items-center gap-2">
+                        <span
+                            ref={swatchRef}
+                            className="h-3.5 w-3.5 shrink-0 rounded-full border border-white/40"
+                        />
+                        <span ref={classNameRef} className="text-sm font-bold" />
+                    </div>
+                    <span
+                        ref={classNumberRef}
+                        className="mt-0.5 block pl-5.5 text-[11px] text-slate-300"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default function Visualizer({ rgbSeq, maskSeq, tStep, sampleFilename }) {
     const rgbRef = useRef(null);
     const maskRef = useRef(null);
     const overlayRef = useRef(null);
+    const activeTooltipRef = useRef(null);
 
     useEffect(() => {
         if (!rgbSeq || !maskSeq || tStep === undefined) return;
         
         const t = tStep; 
-        const W = 128;
-        const H = 128;
+        const W = CANVAS_SIZE;
+        const H = CANVAS_SIZE;
         const rgbOffset = t * W * H * 3;
         const maskOffset = t * W * H;
 
@@ -59,19 +168,29 @@ export default function Visualizer({ rgbSeq, maskSeq, tStep }) {
     }, [rgbSeq, maskSeq, tStep]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex flex-col items-center">
-                <h3 className="text-sm font-semibold mb-2">RGB Satellite (t={tStep+1})</h3>
-                <canvas ref={rgbRef} width={128} height={128} className="w-full aspect-square border-4 border-slate-100 rounded-xl max-w-sm object-contain pixelated shadow-sm" style={{imageRendering: 'pixelated'}} />
+                <h3 className="text-sm font-semibold mb-1">RGB Satellite (t={tStep+1})</h3>
+                <p className="h-5 text-xs text-slate-400 mb-2">Temporal satellite composite</p>
+                <canvas ref={rgbRef} width={CANVAS_SIZE} height={CANVAS_SIZE} className="w-full aspect-square border-4 border-slate-100 rounded-xl max-w-sm object-contain pixelated shadow-sm" style={{imageRendering: 'pixelated'}} />
             </div>
-            <div className="flex flex-col items-center">
-                <h3 className="text-sm font-semibold mb-2">Segmentation Prediction</h3>
-                <canvas ref={maskRef} width={128} height={128} className="w-full aspect-square border-4 border-slate-100 rounded-xl max-w-sm object-contain pixelated shadow-sm" style={{imageRendering: 'pixelated'}} />
-            </div>
-            <div className="flex flex-col items-center">
-                <h3 className="text-sm font-semibold mb-2">Alpha Overlay</h3>
-                <canvas ref={overlayRef} width={128} height={128} className="w-full aspect-square border-4 border-slate-100 rounded-xl max-w-sm object-contain pixelated shadow-sm" style={{imageRendering: 'pixelated'}} />
-            </div>
+            <InteractiveCropCanvas
+                canvasRef={maskRef}
+                maskSeq={maskSeq}
+                maskOffset={tStep * CANVAS_SIZE * CANVAS_SIZE}
+                title="Segmentation Prediction"
+                tooltipId="segmentation-tooltip"
+                activeTooltipRef={activeTooltipRef}
+            />
+            <InteractiveCropCanvas
+                canvasRef={overlayRef}
+                maskSeq={maskSeq}
+                maskOffset={tStep * CANVAS_SIZE * CANVAS_SIZE}
+                title="Alpha Overlay"
+                tooltipId="overlay-tooltip"
+                activeTooltipRef={activeTooltipRef}
+            />
+            <SampleMap sampleFilename={sampleFilename} />
         </div>
     );
 }
@@ -79,8 +198,8 @@ export default function Visualizer({ rgbSeq, maskSeq, tStep }) {
 export function Histogram({ maskSeq, tStep }) {
     if (!maskSeq || tStep === undefined) return null;
     const t = tStep; 
-    const W = 128;
-    const H = 128;
+    const W = CANVAS_SIZE;
+    const H = CANVAS_SIZE;
     const maskOffset = t * W * H;
 
     const counts = new Array(CLASS_COLORS.length).fill(0);

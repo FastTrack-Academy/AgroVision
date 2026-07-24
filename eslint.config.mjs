@@ -9,6 +9,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "public/tflite/**",
     "next-env.d.ts",
   ]),
 ]);

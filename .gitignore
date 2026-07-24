@@ -20,6 +20,9 @@
 # production
 /build
 
+# generated from the source research paper during predev/prebuild
+/public/paper/agrovision-paper.pdf
+
 # misc
 .DS_Store
 *.pem

@@ -1,4 +1,6 @@
 import React from 'react';
+import Image from 'next/image';
+import banner from '../public/banner.png';
 
 const CONV_LSTM_SVG = `
         <svg class="conv-svg" viewBox="0 0 1000 800" xmlns="http://www.w3.org/2000/svg">
@@ -336,23 +338,24 @@ export default function Architecture() {
                         Ensuring food security requires accurate, real-time knowledge of what crops are planted where, at scale. However, relying on manual agricultural surveys is slow, expensive, and scales poorly across vast continents. 
                     </p>
                     <p>
-                        <strong>AgroVision</strong> leverages the powerful combination of Spatiotemporal Deep Learning and Earth Observation Data. By feeding full growing-season time-series data from <em>Sentinel-2 satellites</em> (such as the <strong>PASTIS</strong> benchmark dataset) into our deep networks, we can teach AI to understand the phenological signatures (the "growth fingerprint") of over 20 different crop types.
+                        <strong>AgroVision</strong> leverages the powerful combination of Spatiotemporal Deep Learning and Earth Observation Data. By feeding full growing-season time-series data from <em>Sentinel-2 satellites</em> (such as the <strong>PASTIS</strong> benchmark dataset) into our deep networks, we can teach AI to understand the phenological signatures (the &quot;growth fingerprint&quot;) of over 20 different crop types.
                     </p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
                 <div className="bg-white rounded-3xl p-4 border border-slate-200 shadow-xl overflow-hidden shadow-emerald-900/5">
-                    <img 
-                        src="/banner.png" 
+                    <Image
+                        src={banner}
                         alt="Semantic and Panoptic Understanding" 
+                        loading="eager"
                         className="w-full h-auto rounded-2xl object-contain"
                     />
                 </div>
                 <div>
                     <h3 className="text-2xl font-bold mb-4">Semantic & Panoptic Understanding</h3>
                     <p className="text-slate-600 leading-relaxed mb-4">
-                        We don't just classify a whole image. The network generates a <strong>Semantic Map</strong> telling us <em>what crop</em> exists at every single pixel (e.g., Winter wheat vs. Sunflowers), and attempts instance-level spatial separation bounding individual fields.
+                        We don&apos;t just classify a whole image. The network generates a <strong>Semantic Map</strong> telling us <em>what crop</em> exists at every single pixel (e.g., Winter wheat vs. Sunflowers), and attempts instance-level spatial separation bounding individual fields.
                     </p>
                     <p className="text-slate-600 leading-relaxed">
                         The ultimate outcome is <strong>Panoptic Replication</strong>: a hybrid map predicting both the continuous crop class and distinct agricultural parcel boundaries simultaneously.
@@ -360,6 +363,13 @@ export default function Architecture() {
                 </div>
             </div>
 
+        </section>
+    );
+}
+
+export function ArchitecturePipeline() {
+    return (
+        <section className="max-w-6xl mx-auto px-6 pb-16 text-slate-800">
             <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl overflow-hidden relative border border-slate-200">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100/50 rounded-full blur-3xl -mr-32 -mt-32"></div>
                 <div className="mb-8 relative z-10 text-center text-slate-800">
@@ -373,7 +383,6 @@ export default function Architecture() {
                     <div style={{minWidth: '800px'}} dangerouslySetInnerHTML={{ __html: CONV_LSTM_SVG }} />
                 </div>
             </div>
-            
         </section>
     );
 }

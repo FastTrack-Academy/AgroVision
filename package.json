@@ -3,20 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "sync:litert": "node scripts/copy_litert_wasm.mjs",
+    "sync:metadata": "node scripts/build_sample_metadata.mjs",
+    "sync:paper": "node scripts/copy_paper.mjs",
+    "predev": "npm run sync:litert && npm run sync:metadata && npm run sync:paper",
+    "dev": "node --max-old-space-size=4096 node_modules/next/dist/bin/next dev --webpack",
+    "prebuild": "npm run sync:litert && npm run sync:metadata && npm run sync:paper",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.1",
+    "@litertjs/core": "^2.5.3",
+    "leaflet": "^1.9.4",
+    "next": "^16.2.11",
+    "proj4": "^2.20.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "^16.2.11",
     "tailwindcss": "^4"
   }
 }
